@@ -11,6 +11,7 @@
             <h1>Карточки для обучения</h1>
             <div class="header-buttons">
                 <button id="addCardBtn">Добавить карточку</button>
+                <button id="addCategoryBtn">Добавить категорию</button>
                 <button id="startStudyBtn">Начать обучение</button>
                 <button id="startTestBtn">Начать тест</button>
             </div>
@@ -19,6 +20,12 @@
         <main>
             <div id="cardsLibrary" class="active-section">
                 <h2>Библиотека карточек</h2>
+                <div class="category-filter">
+                    <label for="categorySelect">Фильтр по категории:</label>
+                    <select id="categorySelect">
+                        <option value="all">Все категории</option>
+                    </select>
+                </div>
                 <div id="cardsContainer"></div>
                 <div id="noCardsMessage">У вас пока нет карточек. Нажмите "Добавить карточку", чтобы создать первую.</div>
             </div>
@@ -82,8 +89,31 @@
                         <textarea id="cardBack" required></textarea>
                     </div>
                     <div class="form-group">
+                        <label for="cardCategory">Категория:</label>
+                        <select id="cardCategory" required>
+                            <option value="">Выберите категорию</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <button type="submit" id="saveCardBtn">Сохранить</button>
                         <button type="button" id="cancelCardBtn">Отмена</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div id="categoryModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Новая категория</h2>
+                <form id="categoryForm">
+                    <div class="form-group">
+                        <label for="categoryName">Название категории:</label>
+                        <input type="text" id="categoryName" required>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" id="saveCategoryBtn">Сохранить</button>
+                        <button type="button" id="cancelCategoryBtn">Отмена</button>
                     </div>
                 </form>
             </div>

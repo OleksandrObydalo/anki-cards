@@ -1,15 +1,21 @@
 document.addEventListener('DOMContentLoaded', function() {
     // DOM элементы
     const cardModal = document.getElementById('cardModal');
+    const categoryModal = document.getElementById('categoryModal');
     const modalTitle = document.getElementById('modalTitle');
     const cardForm = document.getElementById('cardForm');
+    const categoryForm = document.getElementById('categoryForm');
     const cardFrontInput = document.getElementById('cardFront');
     const cardBackInput = document.getElementById('cardBack');
+    const cardCategorySelect = document.getElementById('cardCategory');
+    const categoryNameInput = document.getElementById('categoryName');
     const cardsContainer = document.getElementById('cardsContainer');
     const noCardsMessage = document.getElementById('noCardsMessage');
     const addCardBtn = document.getElementById('addCardBtn');
+    const addCategoryBtn = document.getElementById('addCategoryBtn');
     const cancelCardBtn = document.getElementById('cancelCardBtn');
-    const modalClose = document.querySelector('.close');
+    const cancelCategoryBtn = document.getElementById('cancelCategoryBtn');
+    const categorySelect = document.getElementById('categorySelect');
     const startStudyBtn = document.getElementById('startStudyBtn');
     const startTestBtn = document.getElementById('startTestBtn');
     const cardsLibrary = document.getElementById('cardsLibrary');
@@ -31,9 +37,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const totalCards = document.getElementById('totalCards');
     const correctAnswers = document.getElementById('correctAnswers');
 
-    // Хранилище карточек
+    // Хранилище карточек и категорий
     let cards = JSON.parse(localStorage.getItem('flashcards')) || [];
+    let categories = JSON.parse(localStorage.getItem('flashcardCategories')) || [];
     let currentEditingIndex = null;
+    let currentCategory = 'all';
     let currentStudyIndex = 0;
     let studyStack = [];
     let testStack = [];
@@ -45,9 +53,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Обработчики событий
     addCardBtn.addEventListener('click', openAddCardModal);
-    cancelCardBtn.addEventListener('click', closeModal);
-    modalClose.addEventListener('click', closeModal);
+    addCategoryBtn.addEventListener('click', openCategoryModal);
+    cancelCardBtn.addEventListener('click', closeCardModal);
+    cancelCategoryBtn.addEventListener('click', closeCategoryModal);
+    categoryForm.addEventListener('submit', saveCategory);
+    document.querySelectorAll('.modal .close').forEach(el => {
+        el.addEventListener('click', function() {
+            this.closest('.modal').style.display = 'none';
+        });
+    });
     cardForm.addEventListener('submit', saveCard);
+    categorySelect.addEventListener('change', filterCardsByCategory);
     startStudyBtn.addEventListener('click', startStudyMode);
     startTestBtn.addEventListener('click', startTestMode);
     exitStudyBtn.addEventListener('click', exitStudyMode);
@@ -61,15 +77,18 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.addEventListener('click', () => rateCard(parseInt(btn.dataset.rating)));
     });
 
-    // Закрытие модального окна при клике вне его области
+    // Закрытие модальных окон при клике вне их области
     window.addEventListener('click', function(event) {
         if (event.target === cardModal) {
-            closeModal();
+            closeCardModal();
+        } else if (event.target === categoryModal) {
+            closeCategoryModal();
         }
     });
 
     // Функции приложения
     function init() {
+        updateCategoryOptions();
         renderCards();
         updateButtonsState();
     }
@@ -77,22 +96,34 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderCards() {
         cardsContainer.innerHTML = '';
         
-        if (cards.length === 0) {
+        // Фильтруем карточки по выбранной категории
+        const filteredCards = currentCategory === 'all' 
+            ? cards 
+            : cards.filter(card => card.category === currentCategory);
+        
+        if (filteredCards.length === 0) {
             noCardsMessage.style.display = 'block';
             return;
         }
         
         noCardsMessage.style.display = 'none';
         
-        cards.forEach((card, index) => {
+        filteredCards.forEach((card, index) => {
+            // Находим исходный индекс в полном массиве карточек
+            const originalIndex = cards.findIndex(c => c.front === card.front && c.back === card.back);
+            
+            // Находим категорию
+            const categoryName = categories.find(cat => cat.id === card.category)?.name || 'Без категории';
+            
             const cardElement = document.createElement('div');
             cardElement.className = 'card-item';
             cardElement.innerHTML = `
+                <div class="card-category">${categoryName}</div>
                 <div class="card-term">${card.front}</div>
                 <div class="card-definition">${card.back}</div>
                 <div class="card-actions">
-                    <button class="edit-btn" data-index="${index}">Изменить</button>
-                    <button class="delete-btn" data-index="${index}">Удалить</button>
+                    <button class="edit-btn" data-index="${originalIndex}">Изменить</button>
+                    <button class="delete-btn" data-index="${originalIndex}">Удалить</button>
                 </div>
             `;
             cardsContainer.appendChild(cardElement);
@@ -112,26 +143,87 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function updateButtonsState() {
-        const hasCards = cards.length > 0;
-        startStudyBtn.disabled = !hasCards;
-        startTestBtn.disabled = !hasCards;
+    function updateCategoryOptions() {
+        // Обновляем выпадающий список категорий в форме
+        cardCategorySelect.innerHTML = '<option value="">Выберите категорию</option>';
         
-        if (!hasCards) {
-            startStudyBtn.style.opacity = '0.5';
-            startTestBtn.style.opacity = '0.5';
-        } else {
-            startStudyBtn.style.opacity = '1';
-            startTestBtn.style.opacity = '1';
+        categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.id;
+            option.textContent = category.name;
+            cardCategorySelect.appendChild(option);
+        });
+        
+        // Обновляем выпадающий список фильтра категорий
+        const selectedCategory = categorySelect.value;
+        categorySelect.innerHTML = '<option value="all">Все категории</option>';
+        
+        categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.id;
+            option.textContent = category.name;
+            categorySelect.appendChild(option);
+            
+            // Восстанавливаем выбранную категорию
+            if (selectedCategory === category.id) {
+                option.selected = true;
+            }
+        });
+    }
+
+    function filterCardsByCategory() {
+        currentCategory = categorySelect.value;
+        renderCards();
+    }
+
+    function openCategoryModal() {
+        categoryNameInput.value = '';
+        categoryModal.style.display = 'block';
+    }
+
+    function closeCategoryModal() {
+        categoryModal.style.display = 'none';
+    }
+
+    function saveCategory(e) {
+        e.preventDefault();
+        
+        const name = categoryNameInput.value.trim();
+        
+        if (!name) {
+            alert('Пожалуйста, введите название категории');
+            return;
         }
+        
+        // Проверяем, не существует ли уже такая категория
+        if (categories.some(cat => cat.name.toLowerCase() === name.toLowerCase())) {
+            alert('Категория с таким названием уже существует');
+            return;
+        }
+        
+        const newCategory = {
+            id: Date.now().toString(), // уникальный ID на основе времени
+            name
+        };
+        
+        categories.push(newCategory);
+        localStorage.setItem('flashcardCategories', JSON.stringify(categories));
+        
+        updateCategoryOptions();
+        closeCategoryModal();
     }
 
     function openAddCardModal() {
         modalTitle.textContent = 'Новая карточка';
         cardFrontInput.value = '';
         cardBackInput.value = '';
+        cardCategorySelect.value = '';
         currentEditingIndex = null;
         cardModal.style.display = 'block';
+    }
+
+    function closeCardModal() {
+        cardModal.style.display = 'none';
     }
 
     function openEditCardModal(index) {
@@ -139,12 +231,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const card = cards[index];
         cardFrontInput.value = card.front;
         cardBackInput.value = card.back;
+        cardCategorySelect.value = card.category || '';
         currentEditingIndex = index;
         cardModal.style.display = 'block';
-    }
-
-    function closeModal() {
-        cardModal.style.display = 'none';
     }
 
     function saveCard(e) {
@@ -152,15 +241,22 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const front = cardFrontInput.value.trim();
         const back = cardBackInput.value.trim();
+        const category = cardCategorySelect.value;
         
         if (!front || !back) {
             alert('Пожалуйста, заполните оба поля');
             return;
         }
         
+        if (!category) {
+            alert('Пожалуйста, выберите категорию');
+            return;
+        }
+        
         const newCard = {
             front,
             back,
+            category,
             lastStudied: null,
             difficulty: 0 // 0-4 шкала сложности
         };
@@ -183,18 +279,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Сохраняем в localStorage и обновляем UI
         localStorage.setItem('flashcards', JSON.stringify(cards));
-        closeModal();
+        closeCardModal();
         renderCards();
         updateButtonsState();
-    }
-
-    function deleteCard(index) {
-        if (confirm('Вы уверены, что хотите удалить эту карточку?')) {
-            cards.splice(index, 1);
-            localStorage.setItem('flashcards', JSON.stringify(cards));
-            renderCards();
-            updateButtonsState();
-        }
     }
 
     function startStudyMode() {
@@ -203,9 +290,14 @@ document.addEventListener('DOMContentLoaded', function() {
         studyMode.classList.remove('hidden-section');
         studyMode.classList.add('active-section');
         
-        // Формируем очередь карточек для изучения
-        // Сначала новые карточки, затем те, что давно не повторялись и с высокой сложностью
-        studyStack = [...cards].sort((a, b) => {
+        // Формируем очередь карточек для изучения с учетом текущей категории
+        let cardsToStudy = [...cards];
+        
+        if (currentCategory !== 'all') {
+            cardsToStudy = cardsToStudy.filter(card => card.category === currentCategory);
+        }
+        
+        studyStack = cardsToStudy.sort((a, b) => {
             // Сначала новые
             if (!a.lastStudied && b.lastStudied) return -1;
             if (a.lastStudied && !b.lastStudied) return 1;
@@ -274,8 +366,15 @@ document.addEventListener('DOMContentLoaded', function() {
         testMode.classList.remove('hidden-section');
         testMode.classList.add('active-section');
         
+        // Используем только карточки из выбранной категории
+        let cardsToTest = [...cards];
+        
+        if (currentCategory !== 'all') {
+            cardsToTest = cardsToTest.filter(card => card.category === currentCategory);
+        }
+        
         // Перемешиваем карточки для теста
-        testStack = [...cards].sort(() => Math.random() - 0.5);
+        testStack = cardsToTest.sort(() => Math.random() - 0.5);
         testCurrentIndex = 0;
         testCorrectCount = 0;
         
@@ -342,5 +441,27 @@ document.addEventListener('DOMContentLoaded', function() {
         cardsLibrary.classList.remove('hidden-section');
         cardsLibrary.classList.add('active-section');
     }
-});
 
+    function updateButtonsState() {
+        const hasCards = cards.length > 0;
+        startStudyBtn.disabled = !hasCards;
+        startTestBtn.disabled = !hasCards;
+        
+        if (!hasCards) {
+            startStudyBtn.style.opacity = '0.5';
+            startTestBtn.style.opacity = '0.5';
+        } else {
+            startStudyBtn.style.opacity = '1';
+            startTestBtn.style.opacity = '1';
+        }
+    }
+
+    function deleteCard(index) {
+        if (confirm('Вы уверены, что хотите удалить эту карточку?')) {
+            cards.splice(index, 1);
+            localStorage.setItem('flashcards', JSON.stringify(cards));
+            renderCards();
+            updateButtonsState();
+        }
+    }
+});
