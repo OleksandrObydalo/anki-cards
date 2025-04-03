@@ -2,173 +2,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANKI-подобная система карточек</title>
+    <title>ANKI-подобные карточки</title>
     <link rel="stylesheet" href="styles.css">
-    <script type="importmap">
-        {
-            "imports": {
-                "marked": "https://cdn.jsdelivr.net/npm/marked@12.0.0/lib/marked.esm.js"
-            }
-        }
-    </script>
-    <script src="app.js" type="module" defer></script>
 </head>
 <body>
-    <div class="container">
+    <div class="app-container">
         <header>
-            <h1>ANKI карточки</h1>
+            <h1>Карточки для обучения</h1>
             <div class="header-buttons">
-                <button id="add-card-btn">Добавить карточку</button>
-                <button id="study-btn">Учить карточки</button>
-                <button id="study-by-tag">По темам</button>
-                <button id="repeat-cards">Повторение</button>
-                <button id="manage-btn">Управление</button>
+                <button id="addCardBtn">Добавить карточку</button>
+                <button id="startStudyBtn">Начать обучение</button>
+                <button id="startTestBtn">Начать тест</button>
             </div>
         </header>
 
         <main>
-            <!-- Главный экран -->
-            <section id="welcome-screen" class="screen active">
-                <div class="welcome-content">
-                    <h2>Добро пожаловать в систему обучения с карточками</h2>
-                    <p>Создавайте, редактируйте и изучайте свои карточки для эффективного запоминания новых терминов</p>
-                    <div class="stats">
-                        <div class="stat-item">
-                            <span id="total-cards">0</span>
-                            <p>Всего карточек</p>
-                        </div>
-                        <div class="stat-item">
-                            <span id="due-today">0</span>
-                            <p>К изучению сегодня</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Экран добавления карточки -->
-            <section id="add-card-screen" class="screen">
-                <h2>Создание новой карточки</h2>
-                <div class="card-form">
-                    <div class="form-group">
-                        <label for="front-content">Термин (лицевая сторона):</label>
-                        <textarea id="front-content" placeholder="Введите термин или вопрос"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="back-content">Определение (обратная сторона):</label>
-                        <textarea id="back-content" placeholder="Введите определение или ответ"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="tags">Теги (через запятую):</label>
-                        <input type="text" id="tags" placeholder="Например: математика, алгебра">
-                    </div>
-                    <div class="form-group">
-                        <label for="image-upload">Изображение (опционально):</label>
-                        <input type="file" id="image-upload" accept="image/*">
-                        <div id="image-preview" class="image-preview"></div>
-                        <button type="button" id="remove-image" class="secondary-btn">Удалить изображение</button>
-                    </div>
-                    <div class="form-buttons">
-                        <button id="save-card">Сохранить</button>
-                        <button id="cancel-add">Отмена</button>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Экран изучения -->
-            <section id="study-screen" class="screen">
-                <div class="study-controls">
-                    <div class="study-progress">
-                        <span id="current-card">0</span>/<span id="total-study-cards">0</span>
-                    </div>
-                    <button id="finish-study" class="secondary-btn">Завершить</button>
-                </div>
-                
-                <div class="flashcard">
-                    <div class="flashcard-inner">
-                        <div class="flashcard-front">
-                            <div id="card-front-content"></div>
-                            <div id="card-image-preview" class="card-image-container"></div>
-                        </div>
-                        <div class="flashcard-back">
-                            <div id="card-back-content"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card-controls">
-                    <button id="show-answer">Показать ответ</button>
-                    <div class="rating-buttons hidden">
-                        <button data-rating="again" class="rating-btn">Снова</button>
-                        <button data-rating="hard" class="rating-btn">Сложно</button>
-                        <button data-rating="good" class="rating-btn">Хорошо</button>
-                        <button data-rating="easy" class="rating-btn">Легко</button>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Экран управления -->
-            <section id="manage-screen" class="screen">
-                <div class="manage-header">
-                    <h2>Управление карточками</h2>
-                    <div class="manage-controls">
-                        <input type="text" id="search-cards" placeholder="Поиск по карточкам">
-                        <select id="filter-tags">
-                            <option value="">Все теги</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="cards-list">
-                    <!-- Список карточек будет добавлен через JavaScript -->
-                </div>
-            </section>
-
-            <!-- Модальное окно выбора тега для изучения -->
-            <div id="tag-selection-modal" class="modal">
-                <div class="modal-content">
-                    <span class="close-modal-tag">&times;</span>
-                    <h3>Выберите тему для изучения</h3>
-                    <div class="tag-selection-form">
-                        <select id="study-tag-select">
-                            <!-- Теги будут добавлены через JavaScript -->
-                        </select>
-                        <button id="start-tag-study">Начать изучение</button>
-                    </div>
-                </div>
+            <div id="cardsLibrary" class="active-section">
+                <h2>Библиотека карточек</h2>
+                <div id="cardsContainer"></div>
+                <div id="noCardsMessage">У вас пока нет карточек. Нажмите "Добавить карточку", чтобы создать первую.</div>
             </div>
 
-            <!-- Модальное окно редактирования -->
-            <div id="edit-modal" class="modal">
-                <div class="modal-content">
-                    <span class="close-modal">&times;</span>
-                    <h3>Редактирование карточки</h3>
-                    <div class="card-form">
-                        <div class="form-group">
-                            <label for="edit-front-content">Термин (лицевая сторона):</label>
-                            <textarea id="edit-front-content"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="edit-back-content">Определение (обратная сторона):</label>
-                            <textarea id="edit-back-content"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="edit-tags">Теги (через запятую):</label>
-                            <input type="text" id="edit-tags">
-                        </div>
-                        <div class="form-group">
-                            <label for="edit-image-upload">Изображение (опционально):</label>
-                            <input type="file" id="edit-image-upload" accept="image/*">
-                            <div id="edit-image-preview" class="image-preview"></div>
-                            <button type="button" id="edit-remove-image" class="secondary-btn">Удалить изображение</button>
-                        </div>
-                        <div class="form-buttons">
-                            <button id="update-card">Обновить</button>
-                            <button id="delete-card" class="danger-btn">Удалить</button>
-                        </div>
+            <div id="studyMode" class="hidden-section">
+                <h2>Режим обучения</h2>
+                <div class="flashcard-container">
+                    <div id="studyCard" class="flashcard">
+                        <div class="flashcard-front"></div>
+                        <div class="flashcard-back"></div>
                     </div>
                 </div>
+                <div class="study-controls">
+                    <button id="showAnswerBtn">Показать ответ</button>
+                    <div id="ratingBtns" class="hidden">
+                        <p>Оцените, насколько хорошо вы знаете термин:</p>
+                        <button data-rating="1" class="rating-btn">Не знаю</button>
+                        <button data-rating="2" class="rating-btn">С трудом</button>
+                        <button data-rating="3" class="rating-btn">Хорошо</button>
+                        <button data-rating="4" class="rating-btn">Отлично</button>
+                    </div>
+                </div>
+                <button id="exitStudyBtn" class="exit-btn">Вернуться к библиотеке</button>
+            </div>
+
+            <div id="testMode" class="hidden-section">
+                <h2>Режим тестирования</h2>
+                <div class="flashcard-container">
+                    <div id="testCard" class="flashcard">
+                        <div class="flashcard-front"></div>
+                    </div>
+                </div>
+                <div class="test-controls">
+                    <input type="text" id="testAnswer" placeholder="Введите ответ...">
+                    <button id="checkAnswerBtn">Проверить</button>
+                </div>
+                <div id="testResult" class="hidden">
+                    <p id="resultMessage"></p>
+                    <p id="correctAnswer"></p>
+                </div>
+                <button id="nextTestCardBtn" class="hidden">Следующая карточка</button>
+                <div id="testProgress">
+                    <p>Прогресс: <span id="currentCardNum">0</span>/<span id="totalCards">0</span></p>
+                    <p>Правильно: <span id="correctAnswers">0</span></p>
+                </div>
+                <button id="exitTestBtn" class="exit-btn">Завершить тест</button>
             </div>
         </main>
+
+        <div id="cardModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 id="modalTitle">Новая карточка</h2>
+                <form id="cardForm">
+                    <div class="form-group">
+                        <label for="cardFront">Термин (передняя сторона):</label>
+                        <textarea id="cardFront" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="cardBack">Определение (обратная сторона):</label>
+                        <textarea id="cardBack" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" id="saveCardBtn">Сохранить</button>
+                        <button type="button" id="cancelCardBtn">Отмена</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
+    <script src="script.js"></script>
 </body>
 </html>
